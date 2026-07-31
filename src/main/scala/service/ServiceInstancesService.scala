@@ -1,19 +1,21 @@
 package service
 
+import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import java.util.UUID
+
+import scala.concurrent.duration.*
+
 import cats.effect.{IO, Resource}
 import cats.syntax.all.*
-import domain.BrokerError
+
 import domain.given
+import domain.BrokerError
 import io.circe.{parser as JsonParser, Json}
 import openservicebroker.model.*
 import openservicebroker.model.LastOperationResourceEnums.State as OpState
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
-
-import java.time.{Instant, OffsetDateTime, ZoneOffset}
-import java.util.UUID
-import scala.concurrent.duration.*
 
 object ServiceInstancesService {
 
@@ -22,17 +24,20 @@ object ServiceInstancesService {
   }
 
   object OperationKind {
+
     def asString(k: OperationKind): String = k match {
       case Provision   => "provision"
       case Update      => "update"
       case Deprovision => "deprovision"
     }
+
     def fromString(s: String): OperationKind = s match {
       case "provision"   => Provision
       case "update"      => Update
       case "deprovision" => Deprovision
       case other         => throw new RuntimeException(s"Unknown operation_kind: $other")
     }
+
   }
 
   final case class Operation(
@@ -57,22 +62,30 @@ object ServiceInstancesService {
   given CanEqual[InstanceState, InstanceState] = CanEqual.derived
 
   enum ProvisionResult {
+
     case AlreadyExists(response: ServiceInstanceProvisionResponse)
     case Created(response: ServiceInstanceProvisionResponse)
     case Accepted(op: ServiceInstanceAsyncOperation)
+
   }
 
   enum UpdateResult {
+
     case Updated
     case Accepted(operation: Option[String])
+
   }
 
   enum DeprovisionResult {
+
     case Deleted
     case Accepted(operation: Option[String])
+
   }
 
-  /** How long a simulated async operation takes to "complete". */
+  /**
+    * How long a simulated async operation takes to "complete".
+    */
   val AsyncDelay: FiniteDuration = 2.seconds
 
   type SessionPool = Resource[IO, Session[IO]]
@@ -128,15 +141,16 @@ object ServiceInstancesService {
   )
 
   private def maintenanceInfoToJson(m: MaintenanceInfo): Json = Json.obj(
-    "version" -> Json.fromString(m.version),
+    "version"     -> Json.fromString(m.version),
     "description" -> m.description.fold(Json.Null)(Json.fromString)
   )
 
   private def rowToState(r: InstanceRow): InstanceState = {
-    val op: Option[Operation] = (r.operationId, r.operationKind, r.operationCompleteAt, r.operationState) match {
-      case (Some(id), Some(kind), Some(at), Some(st)) => Some(Operation(id, kind, at, st))
-      case _                                          => None
-    }
+    val op: Option[Operation] =
+      (r.operationId, r.operationKind, r.operationCompleteAt, r.operationState) match {
+        case (Some(id), Some(kind), Some(at), Some(st)) => Some(Operation(id, kind, at, st))
+        case _                                          => None
+      }
     InstanceState(
       serviceId = r.serviceId,
       planId = r.planId,
@@ -265,16 +279,26 @@ object ServiceInstancesService {
               session.transaction.use { _ =>
                 loadInstance(session, instanceId).flatMap {
                   case Some(existing) if !existing.deleted =>
-                    val same =
-                      (existing.serviceId == body.serviceId) &&
-                        (existing.planId == body.planId) &&
-                        (existing.parameters == body.parameters) &&
-                        (existing.context == body.context)
+                    val same = (existing.serviceId == body.serviceId) &&
+                      (existing.planId == body.planId) &&
+                      (existing.parameters == body.parameters) &&
+                      (existing.context == body.context)
                     if (same) {
-                      val res = ServiceInstanceProvisionResponse(dashboardUrl = existing.dashboardUrl)
-                      IO.pure(Right(ProvisionResult.AlreadyExists(res)): Either[BrokerError, ProvisionResult])
+                      val res =
+                        ServiceInstanceProvisionResponse(dashboardUrl = existing.dashboardUrl)
+                      IO.pure(
+                        Right(ProvisionResult.AlreadyExists(res)): Either[
+                          BrokerError,
+                          ProvisionResult
+                        ]
+                      )
                     } else {
-                      IO.pure(Left(BrokerError.Conflict("Service instance already exists with different attributes")))
+                      IO.pure(
+                        Left(
+                          BrokerError
+                            .Conflict("Service instance already exists with different attributes")
+                        )
+                      )
                     }
                   case _ =>
                     newOperation(OperationKind.Provision).flatMap { op =>
@@ -335,7 +359,7 @@ object ServiceInstancesService {
                     IO.pure(Left(BrokerError.AsyncRequired))
                   } else {
                     newOperation(OperationKind.Update).flatMap { op =>
-                      val async = mustAsync && acceptsIncomplete
+                      val async   = mustAsync && acceptsIncomplete
                       val updated = existing.copy(
                         planId = newPlanId,
                         parameters = body.parameters.orElse(existing.parameters),
@@ -419,13 +443,16 @@ object ServiceInstancesService {
               case None =>
                 IO.pure(Left(BrokerError.NotFound): Either[BrokerError, ServiceInstanceResource])
               case Some(raw) =>
-                val s = settle(raw, t)
+                val s                 = settle(raw, t)
                 val persist: IO[Unit] =
                   if (s == raw) IO.unit
                   else if (s.deleted) {
                     session.prepare(deleteInstance).flatMap(_.execute(instanceId)).void
                   } else {
-                    session.prepare(updateInstance).flatMap(_.execute((stateToRow(s), instanceId))).void
+                    session
+                      .prepare(updateInstance)
+                      .flatMap(_.execute((stateToRow(s), instanceId)))
+                      .void
                   }
                 persist.as {
                   if (s.deleted) {
@@ -473,13 +500,16 @@ object ServiceInstancesService {
                   case Some(op) if operationId.exists(_ != op.id) =>
                     IO.pure(Left(BrokerError.NotFound))
                   case Some(_) =>
-                    val s = settle(raw, t)
+                    val s                 = settle(raw, t)
                     val persist: IO[Unit] =
                       if (s == raw) IO.unit
                       else if (s.deleted) {
                         session.prepare(deleteInstance).flatMap(_.execute(instanceId)).void
                       } else {
-                        session.prepare(updateInstance).flatMap(_.execute((stateToRow(s), instanceId))).void
+                        session
+                          .prepare(updateInstance)
+                          .flatMap(_.execute((stateToRow(s), instanceId)))
+                          .void
                       }
                     persist.as(
                       Right(
@@ -495,36 +525,45 @@ object ServiceInstancesService {
         }
       }
     }
+
   }
+
 }
 
 trait ServiceInstancesService {
+
   import ServiceInstancesService.*
+
   def provision(
       instanceId: String,
       body: ServiceInstanceProvisionRequestBody,
       acceptsIncomplete: Boolean
   ): IO[Either[BrokerError, ProvisionResult]]
+
   def update(
       instanceId: String,
       body: ServiceInstanceUpdateRequestBody,
       acceptsIncomplete: Boolean
   ): IO[Either[BrokerError, UpdateResult]]
+
   def deprovision(
       instanceId: String,
       serviceId: String,
       planId: String,
       acceptsIncomplete: Boolean
   ): IO[Either[BrokerError, DeprovisionResult]]
+
   def fetch(
       instanceId: String,
       serviceId: Option[String],
       planId: Option[String]
   ): IO[Either[BrokerError, ServiceInstanceResource]]
+
   def lastOperation(
       instanceId: String,
       serviceId: Option[String],
       planId: Option[String],
       operationId: Option[String]
   ): IO[Either[BrokerError, LastOperationResource]]
+
 }

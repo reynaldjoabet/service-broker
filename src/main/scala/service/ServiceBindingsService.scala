@@ -1,19 +1,21 @@
 package service
 
+import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import java.util.UUID
+
+import scala.concurrent.duration.*
+
 import cats.effect.{IO, Resource}
 import cats.syntax.all.*
-import domain.BrokerError
+
 import domain.given
+import domain.BrokerError
 import io.circe.{parser as JsonParser, Json}
 import openservicebroker.model.*
 import openservicebroker.model.LastOperationResourceEnums.State as OpState
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
-
-import java.time.{Instant, OffsetDateTime, ZoneOffset}
-import java.util.UUID
-import scala.concurrent.duration.*
 
 object ServiceBindingsService {
 
@@ -22,15 +24,18 @@ object ServiceBindingsService {
   }
 
   object OperationKind {
+
     def asString(k: OperationKind): String = k match {
       case Bind   => "bind"
       case Unbind => "unbind"
     }
+
     def fromString(s: String): OperationKind = s match {
       case "bind"   => Bind
       case "unbind" => Unbind
       case other    => throw new RuntimeException(s"Unknown operation_kind: $other")
     }
+
   }
 
   final case class Operation(
@@ -57,14 +62,18 @@ object ServiceBindingsService {
   given CanEqual[BindingState, BindingState] = CanEqual.derived
 
   enum BindResult {
+
     case AlreadyExists(response: ServiceBindingResponse)
     case Created(response: ServiceBindingResponse)
     case Accepted(operation: Option[String])
+
   }
 
   enum UnbindResult {
+
     case Deleted
     case Accepted(operation: Option[String])
+
   }
 
   val AsyncDelay: FiniteDuration = 2.seconds
@@ -122,10 +131,11 @@ object ServiceBindingsService {
       .to[BindingRow]
 
   private def rowToState(instanceId: String, r: BindingRow): BindingState = {
-    val op: Option[Operation] = (r.operationId, r.operationKind, r.operationCompleteAt, r.operationState) match {
-      case (Some(id), Some(kind), Some(at), Some(st)) => Some(Operation(id, kind, at, st))
-      case _                                          => None
-    }
+    val op: Option[Operation] =
+      (r.operationId, r.operationKind, r.operationCompleteAt, r.operationState) match {
+        case (Some(id), Some(kind), Some(at), Some(st)) => Some(Operation(id, kind, at, st))
+        case _                                          => None
+      }
     BindingState(
       instanceId = instanceId,
       serviceId = r.serviceId,
@@ -243,12 +253,16 @@ object ServiceBindingsService {
 
     private def fakeCredentials(instanceId: String, bindingId: String): Json =
       Json.obj(
-        "uri" -> Json.fromString(s"postgres://user:pwd@example.com/$instanceId"),
+        "uri"      -> Json.fromString(s"postgres://user:pwd@example.com/$instanceId"),
         "username" -> Json.fromString(s"user-$bindingId"),
         "password" -> Json.fromString("changeme")
       )
 
-    private def loadBinding(session: Session[IO], instanceId: String, bindingId: String): IO[Option[BindingState]] =
+    private def loadBinding(
+        session: Session[IO],
+        instanceId: String,
+        bindingId: String
+    ): IO[Option[BindingState]] =
       session.prepare(selectByKey).flatMap { ps =>
         ps.option((instanceId, bindingId)).map(_.map(rowToState(instanceId, _)))
       }
@@ -278,23 +292,28 @@ object ServiceBindingsService {
                 IO.pure(Left(BrokerError.AsyncRequired))
               } else {
                 newOperation(OperationKind.Bind).flatMap { op =>
-                  val async = mustAsync && acceptsIncomplete
+                  val async       = mustAsync && acceptsIncomplete
                   val credentials = fakeCredentials(instanceId, bindingId)
                   pool.use { session =>
                     session.transaction.use { _ =>
                       loadBinding(session, instanceId, bindingId).flatMap {
                         case Some(existing) if !existing.deleted =>
-                          val same =
-                            (existing.serviceId == body.serviceId) &&
-                              (existing.planId == body.planId) &&
-                              (existing.parameters == body.parameters) &&
-                              (existing.context == body.context)
+                          val same = (existing.serviceId == body.serviceId) &&
+                            (existing.planId == body.planId) &&
+                            (existing.parameters == body.parameters) &&
+                            (existing.context == body.context)
                           if (same) {
                             val res = ServiceBindingResponse(credentials = existing.credentials)
-                            IO.pure(Right(BindResult.AlreadyExists(res)): Either[BrokerError, BindResult])
+                            IO.pure(
+                              Right(BindResult.AlreadyExists(res)): Either[BrokerError, BindResult]
+                            )
                           } else {
                             IO.pure(
-                              Left(BrokerError.Conflict("Service binding already exists with different attributes"))
+                              Left(
+                                BrokerError.Conflict(
+                                  "Service binding already exists with different attributes"
+                                )
+                              )
                             )
                           }
                         case _ =>
@@ -313,9 +332,16 @@ object ServiceBindingsService {
                           session.prepare(insertBinding).flatMap { ps =>
                             ps.execute((instanceId, bindingId, stateToRow(state))).as {
                               if (async) {
-                                Right(BindResult.Accepted(Some(op.id))): Either[BrokerError, BindResult]
+                                Right(BindResult.Accepted(Some(op.id))): Either[
+                                  BrokerError,
+                                  BindResult
+                                ]
                               } else {
-                                Right(BindResult.Created(ServiceBindingResponse(credentials = Some(credentials))))
+                                Right(
+                                  BindResult.Created(
+                                    ServiceBindingResponse(credentials = Some(credentials))
+                                  )
+                                )
                               }
                             }
                           }
@@ -393,13 +419,16 @@ object ServiceBindingsService {
               case None =>
                 IO.pure(Left(BrokerError.NotFound): Either[BrokerError, ServiceBindingResource])
               case Some(raw) =>
-                val s = settle(raw, t)
+                val s                 = settle(raw, t)
                 val persist: IO[Unit] =
                   if (s == raw) IO.unit
                   else if (s.deleted) {
                     session.prepare(deleteBinding).flatMap(_.execute((instanceId, bindingId))).void
                   } else {
-                    session.prepare(updateBinding).flatMap(_.execute((stateToRow(s), instanceId, bindingId))).void
+                    session
+                      .prepare(updateBinding)
+                      .flatMap(_.execute((stateToRow(s), instanceId, bindingId)))
+                      .void
                   }
                 persist.as {
                   if (s.deleted) {
@@ -447,13 +476,19 @@ object ServiceBindingsService {
                   case Some(op) if operationId.exists(_ != op.id) =>
                     IO.pure(Left(BrokerError.NotFound))
                   case Some(_) =>
-                    val s = settle(raw, t)
+                    val s                 = settle(raw, t)
                     val persist: IO[Unit] =
                       if (s == raw) IO.unit
                       else if (s.deleted) {
-                        session.prepare(deleteBinding).flatMap(_.execute((instanceId, bindingId))).void
+                        session
+                          .prepare(deleteBinding)
+                          .flatMap(_.execute((instanceId, bindingId)))
+                          .void
                       } else {
-                        session.prepare(updateBinding).flatMap(_.execute((stateToRow(s), instanceId, bindingId))).void
+                        session
+                          .prepare(updateBinding)
+                          .flatMap(_.execute((stateToRow(s), instanceId, bindingId)))
+                          .void
                       }
                     persist.as(
                       Right(
@@ -469,17 +504,22 @@ object ServiceBindingsService {
         }
       }
     }
+
   }
+
 }
 
 trait ServiceBindingsService {
+
   import ServiceBindingsService.*
+
   def bind(
       instanceId: String,
       bindingId: String,
       body: ServiceBindingRequest,
       acceptsIncomplete: Boolean
   ): IO[Either[BrokerError, BindResult]]
+
   def unbind(
       instanceId: String,
       bindingId: String,
@@ -487,12 +527,14 @@ trait ServiceBindingsService {
       planId: String,
       acceptsIncomplete: Boolean
   ): IO[Either[BrokerError, UnbindResult]]
+
   def fetch(
       instanceId: String,
       bindingId: String,
       serviceId: Option[String],
       planId: Option[String]
   ): IO[Either[BrokerError, ServiceBindingResource]]
+
   def lastOperation(
       instanceId: String,
       bindingId: String,
@@ -500,4 +542,5 @@ trait ServiceBindingsService {
       planId: Option[String],
       operationId: Option[String]
   ): IO[Either[BrokerError, LastOperationResource]]
+
 }

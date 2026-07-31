@@ -1,0 +1,32 @@
+# openapi-generator ignore file
+# https://openapi-generator.tech/docs/customization/#ignore-file-format
+#
+# Files listed here will NOT be generated/overwritten.
+#
+# Patterns are resolved against the directory holding THIS file (the module
+# root), while the generator writes into src/main/scala -- hence the leading
+# **/ on every rule.
+
+# Build & docs
+**/build.sbt
+**/build.gradle
+**/build.gradle.kts
+**/pom.xml
+**/README.md
+**/.openapi-generator-ignore
+**/.openapi-generator/
+**/.scalafmt.conf
+**/docs/
+**/.travis.yml
+**/git_push.sh
+**/gradle/
+**/gradle.properties
+**/gradlew
+**/gradlew.bat
+**/settings.gradle
+
+# Tests (we disable test generation via sbt, but ignore here as a safety net)
+**/test/
+
+# sbt project scaffolding (we have our own at the repo root)
+**/project/

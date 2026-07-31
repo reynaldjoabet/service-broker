@@ -1,0 +1,32 @@
+{
+    "generatorName": "scala-sttp4-jsoniter",
+    "inputSpec": "open-service-broker-api-codegen/spec.yaml",
+    "outputDir": "open-service-broker-api-codegen/src/main/scala",
+    "mainPackage": "",
+    "apiPackage": "openservicebroker.api",
+    "modelPackage": "openservicebroker.model",
+    "invokerPackage": "openservicebroker",
+    "globalProperties": {
+        "apis": "",
+        "models": "",
+        "supportingFiles": ""
+    },
+    "modelPropertyNaming": "camelCase",
+    "ensureUniqueParams": "true",
+    "sortParamsByRequiredFlag": "true",
+    "sortModelPropertiesByRequiredFlag": "true",
+    "allowUnicodeIdentifiers": "false",
+    "prependFormOrBodyParameters": "false",
+    "enumUnknownDefaultCase": "true",
+    "disallowAdditionalPropertiesIfNotPresent": "false",
+    "separateErrorChannel": "true",
+    "sttpClientVersion": "4.0.23",
+    "jsoniterVersion": "2.38.12",
+    "additionalProperties": {
+        "artifactVersion": "0.1.0-SNAPSHOT",
+        "sourceFolder": "",
+        "apiNameSuffix": "Api",
+        "dateLibrary": "java8",
+        "hideGenerationTimestamp": "true"
+    }
+}

@@ -53,7 +53,7 @@ object Dependencies {
     // --- Logging ---
     val scribe  = "3.19.0"
     val slf4j   = "2.0.20"
-    val logback = "1.6.3"
+    val logback = "1.6.4"
 
     // --- Cache ---
     val caffeine = "3.3.0"

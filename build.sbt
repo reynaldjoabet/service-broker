@@ -1,5 +1,5 @@
 import Dependencies.*
-ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / scalaVersion := "3.10.0"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
 ThisBuild / crossScalaVersions := Seq("3.3.8", "3.9.0")

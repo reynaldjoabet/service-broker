@@ -80,9 +80,9 @@ case class ServiceInstancesApi[Auth <: openservicebroker.Authorization] private 
     val instanceIdPathParam = PathSerializable.serialize("instance_id", instanceId, PathStyleFormat.SIMPLE, false)
     val requestURL =
       uri"$baseUrl/v2/service_instances/${instanceIdPathParam}"
-        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true): _*)
-        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true): _*)
-        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true): _*)
+        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true)*)
+        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true)*)
+        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true)*)
 
     basicRequest
       .method(Method.DELETE, requestURL)
@@ -110,8 +110,8 @@ case class ServiceInstancesApi[Auth <: openservicebroker.Authorization] private 
     val instanceIdPathParam = PathSerializable.serialize("instance_id", instanceId, PathStyleFormat.SIMPLE, false)
     val requestURL =
       uri"$baseUrl/v2/service_instances/${instanceIdPathParam}"
-        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true): _*)
-        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true): _*)
+        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true)*)
+        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true)*)
 
     basicRequest
       .method(Method.GET, requestURL)
@@ -144,9 +144,9 @@ case class ServiceInstancesApi[Auth <: openservicebroker.Authorization] private 
     val instanceIdPathParam = PathSerializable.serialize("instance_id", instanceId, PathStyleFormat.SIMPLE, false)
     val requestURL =
       uri"$baseUrl/v2/service_instances/${instanceIdPathParam}/last_operation"
-        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true): _*)
-        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true): _*)
-        .addParams(FormSerializable.serialize("operation", operation, FormStyleFormat.FORM, true): _*)
+        .addParams(FormSerializable.serialize("service_id", serviceId, FormStyleFormat.FORM, true)*)
+        .addParams(FormSerializable.serialize("plan_id", planId, FormStyleFormat.FORM, true)*)
+        .addParams(FormSerializable.serialize("operation", operation, FormStyleFormat.FORM, true)*)
 
     basicRequest
       .method(Method.GET, requestURL)
@@ -178,7 +178,7 @@ case class ServiceInstancesApi[Auth <: openservicebroker.Authorization] private 
     val instanceIdPathParam = PathSerializable.serialize("instance_id", instanceId, PathStyleFormat.SIMPLE, false)
     val requestURL =
       uri"$baseUrl/v2/service_instances/${instanceIdPathParam}"
-        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true): _*)
+        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true)*)
 
     basicRequest
       .method(Method.PUT, requestURL)
@@ -210,7 +210,7 @@ case class ServiceInstancesApi[Auth <: openservicebroker.Authorization] private 
     val instanceIdPathParam = PathSerializable.serialize("instance_id", instanceId, PathStyleFormat.SIMPLE, false)
     val requestURL =
       uri"$baseUrl/v2/service_instances/${instanceIdPathParam}"
-        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true): _*)
+        .addParams(FormSerializable.serialize("accepts_incomplete", acceptsIncomplete, FormStyleFormat.FORM, true)*)
 
     basicRequest
       .method(Method.PATCH, requestURL)

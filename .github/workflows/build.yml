@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    name: Scala ${{ matrix.scala }} / Java ${{ matrix.java }} (${{ matrix.distribution }}) on ${{ matrix.os }}
+    name: Java ${{ matrix.java }} (${{ matrix.distribution }}) on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
@@ -24,7 +24,6 @@ jobs:
       matrix:
         java: [17,21,25]
         distribution: [temurin, corretto]
-        scala: ['3.3.8', '3.9.0']
         os: [ubuntu-latest]
 
     steps:
@@ -51,4 +50,4 @@ jobs:
         run: sbt -v --server "scalafmtSbtCheck; scalafmtCheckAll"
       
       - name: Compile and test
-        run: sbt -v --server "++${{ matrix.scala }}" "Test/compile; test"
+        run: sbt -v --server "Test/compile; test"

@@ -38,7 +38,7 @@ object Dependencies {
     val magnum   = "2.0.0-M4"
     val skunk    = "2.0.0-RC3"
     val hikaricp = "7.1.0"
-    val flyway   = "13.12.0"
+    val flyway   = "13.12.1"
     val postgres = "42.7.14"
 
     // --- Security ---
@@ -47,7 +47,7 @@ object Dependencies {
     val password4j       = "1.8.4"
     val auth0            = "4.6.2"
     val nimbusJoseJwt    = "10.10"
-    val nimbusOauth2Oidc = "11.38.2"
+    val nimbusOauth2Oidc = "11.39"
     val vault            = "5.1.0"
 
     // --- Logging ---
